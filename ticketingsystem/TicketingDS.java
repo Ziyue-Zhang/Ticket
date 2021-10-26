@@ -1,7 +1,8 @@
 package ticketingsystem;
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+//import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.Vector;
 
 public class TicketingDS implements TicketingSystem {
@@ -15,9 +16,10 @@ public class TicketingDS implements TicketingSystem {
 	int stationmask;
     
 	public static AtomicLong count = new AtomicLong(0);
+	int sb = 0;
 	Vector<Vector<Integer>> data;
     
-	ReentrantReadWriteLock rtLock = new ReentrantReadWriteLock();
+	ReentrantLock rtLock = new ReentrantLock();
 	
     TicketingDS(){
 		init();
@@ -78,7 +80,7 @@ public class TicketingDS implements TicketingSystem {
 
 		Vector<Integer>thisroute = data.get(route - 1);
 
-		rtLock.writeLock().lock();
+		rtLock.lock();
 		boolean flag = false;
 		for(int i = 0; i < maxnum; i++){
 			int temp = thisroute.get(i);
@@ -90,7 +92,7 @@ public class TicketingDS implements TicketingSystem {
 				break;
 			}
 		}
-		rtLock.writeLock().unlock();		
+		rtLock.unlock();		
 
 		if(flag){
 			return ticket;
@@ -150,14 +152,14 @@ public class TicketingDS implements TicketingSystem {
 
 		Vector<Integer>thisroute = data.get(route - 1);
 
-		rtLock.writeLock().lock();
+		rtLock.lock();
 		boolean flag = false;
 		int temp = thisroute.get(loc);
 		if((temp | partmask2) == partmask2){
 			flag = true;
 			thisroute.setElementAt(temp | partmask1, loc);
 		}
-		rtLock.writeLock().unlock();
+		rtLock.unlock();
 
 		return flag;
 	}
