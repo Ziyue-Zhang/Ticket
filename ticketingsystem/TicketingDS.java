@@ -1,5 +1,6 @@
 package ticketingsystem;
 
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 //import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
@@ -13,11 +14,10 @@ public class TicketingDS implements TicketingSystem {
 	int threadnum = 16;
 
     int maxnum;
-	int stationmask;
+	long stationmask;
     
 	public static AtomicLong count = new AtomicLong(0);
-	int sb = 0;
-	Vector<Vector<Integer>> data;
+	Vector<CopyOnWriteArrayList<AtomicLong>> data = new Vector<>();
     
 	ReentrantLock rtLock = new ReentrantLock();
 	
@@ -42,11 +42,11 @@ public class TicketingDS implements TicketingSystem {
 		}*/
 		stationmask = (1 << (stationnum-1)) - 1;
 		
-		data = new Vector<Vector<Integer>>();
+		data = new Vector<>();
 		for(int i = 0; i < routenum; i++) {
-			Vector<Integer>temp = new Vector<Integer>();
+			CopyOnWriteArrayList<AtomicLong>temp = new CopyOnWriteArrayList<>();
 			for(int j = 0; j < maxnum; j++) {
-				temp.add(stationmask);
+				temp.add(new AtomicLong(stationmask));
 			}
 			data.add(temp);
 		}
@@ -68,8 +68,8 @@ public class TicketingDS implements TicketingSystem {
 			else
 				partmask2 += 1;
 		} */
-		int partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
-		int partmask2 = stationmask & (~partmask1);
+		long partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
+		long partmask2 = stationmask & (~partmask1);
 
 		Ticket ticket = new Ticket();
 		ticket.tid = tid;
@@ -78,27 +78,23 @@ public class TicketingDS implements TicketingSystem {
 		ticket.departure = departure;
 		ticket.arrival = arrival;
 
-		Vector<Integer>thisroute = data.get(route - 1);
+		CopyOnWriteArrayList<AtomicLong>thisroute = data.get(route - 1);
 
-		rtLock.lock();
-		boolean flag = false;
+		//rtLock.lock();
 		for(int i = 0; i < maxnum; i++){
-			int temp = thisroute.get(i);
-			if((temp & partmask1) == partmask1){
-				thisroute.setElementAt(temp & partmask2, i);
-				flag = true;
-				ticket.coach = i / seatnum + 1;
-				ticket.seat = i % seatnum + 1;
-				break;
+			long temp = thisroute.get(i).get();
+			while((temp & partmask1) == partmask1){
+				if(thisroute.get(i).compareAndSet(temp, temp & partmask2)){
+					ticket.coach = i / seatnum + 1;
+					ticket.seat = i % seatnum + 1;
+					return ticket;
+				}
+				temp = thisroute.get(i).get();
 			}
 		}
-		rtLock.unlock();		
+		//rtLock.unlock();		
 
-		if(flag){
-			return ticket;
-		}
-		else
-			return null;
+		return null;
 	}
 
 	@Override
@@ -111,13 +107,13 @@ public class TicketingDS implements TicketingSystem {
 			if(departure - 1 <= i && i <= arrival - 1)
 				partmask += 1;
 		}*/
-		int partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
+		long partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 
-		Vector<Integer>thisroute = data.get(route - 1);
+		CopyOnWriteArrayList<AtomicLong>thisroute = data.get(route - 1);
 
 		//rtLock.readLock().lock();
 		for(int i = 0; i < maxnum; i++){
-			int temp = thisroute.get(i);
+			long temp = thisroute.get(i).get();
 			if((temp & partmask) == partmask){
 				ans++;
 			}
@@ -147,21 +143,23 @@ public class TicketingDS implements TicketingSystem {
 			else
 				partmask2 += 1;
 		}*/
-		int partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
-		int partmask2 = stationmask & (~partmask1);
+		long partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
+		long partmask2 = stationmask & (~partmask1);
 
-		Vector<Integer>thisroute = data.get(route - 1);
+		CopyOnWriteArrayList<AtomicLong>thisroute = data.get(route - 1);
 
-		rtLock.lock();
-		boolean flag = false;
-		int temp = thisroute.get(loc);
-		if((temp | partmask2) == partmask2){
-			flag = true;
-			thisroute.setElementAt(temp | partmask1, loc);
+		//rtLock.lock();
+		
+		long temp = thisroute.get(loc).get();
+		while((temp | partmask2) == partmask2){
+			if(thisroute.get(loc).compareAndSet(temp, temp | partmask1)){
+				return true;
+			}
+			temp = thisroute.get(loc).get();
 		}
-		rtLock.unlock();
+		//rtLock.unlock();
 
-		return flag;
+		return false;
 	}
 
 
