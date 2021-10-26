@@ -1,10 +1,9 @@
 package ticketingsystem;
 
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-//import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.Vector;
+import java.util.ArrayList;
 
 public class TicketingDS implements TicketingSystem {
 	int routenum = 5;
@@ -17,7 +16,7 @@ public class TicketingDS implements TicketingSystem {
 	long stationmask;
     
 	public static AtomicLong count = new AtomicLong(0);
-	Vector<CopyOnWriteArrayList<AtomicLong>> data = new Vector<>();
+	ArrayList<CopyOnWriteArrayList<AtomicLong>> data;
     
 	ReentrantLock rtLock = new ReentrantLock();
 	
@@ -42,7 +41,7 @@ public class TicketingDS implements TicketingSystem {
 		}*/
 		stationmask = (1 << (stationnum-1)) - 1;
 		
-		data = new Vector<>();
+		data = new ArrayList<>();
 		for(int i = 0; i < routenum; i++) {
 			CopyOnWriteArrayList<AtomicLong>temp = new CopyOnWriteArrayList<>();
 			for(int j = 0; j < maxnum; j++) {
