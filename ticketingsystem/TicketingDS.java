@@ -19,14 +19,10 @@ public class TicketingDS implements TicketingSystem {
     
 	ReentrantReadWriteLock rtLock = new ReentrantReadWriteLock();
 	
-    /*TicketingDS(){
-		this.routenum = 5;
-		this.coachnum = 8;
-		this.seatnum = 100;
-		this.stationnum = 10;
-		this.threadnum = 16;
+    TicketingDS(){
 		init();
-	}*/
+	}
+
 	TicketingDS(int routenum, int coachnum, int seatnum, int stationnum, int threadnum){
 		this.routenum = routenum;
 		this.coachnum = coachnum;
@@ -42,7 +38,7 @@ public class TicketingDS implements TicketingSystem {
 		for(int i = 0; i < stationnum; i++){
 			stationmask = (stationmask << 1) + 1;
 		}*/
-		stationmask = (1 << stationnum) - 1;
+		stationmask = (1 << (stationnum-1)) - 1;
 		
 		data = new Vector<Vector<Integer>>();
 		for(int i = 0; i < routenum; i++) {
@@ -57,7 +53,7 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public Ticket buyTicket(String passenger, int route, int departure, int arrival) {
-		// TODO
+		
 		long tid = count.incrementAndGet();
 
 		/*int partmask1 = 0;
@@ -70,7 +66,7 @@ public class TicketingDS implements TicketingSystem {
 			else
 				partmask2 += 1;
 		} */
-		int partmask1 = (1 << (stationnum-departure+1)) - (1 << (stationnum - arrival));
+		int partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		int partmask2 = stationmask & (~partmask1);
 
 		Ticket ticket = new Ticket();
@@ -113,7 +109,7 @@ public class TicketingDS implements TicketingSystem {
 			if(departure - 1 <= i && i <= arrival - 1)
 				partmask += 1;
 		}*/
-		int partmask = (1 << (stationnum-departure+1)) - (1 << (stationnum - arrival));
+		int partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 
 		Vector<Integer>thisroute = data.get(route - 1);
 
@@ -144,12 +140,12 @@ public class TicketingDS implements TicketingSystem {
 		for(int i = 0; i < stationnum; i++){
 			partmask1 = partmask1 << 1;
 			partmask2 = partmask2 << 1;
-			if(departure - 1 <= i && i <= arrival - 1)
+			if(departure - 1 <= i && i <arrival - 1)
 				partmask1 += 1;
 			else
 				partmask2 += 1;
-		}*/ 
-		int partmask1 = (1 << (stationnum-departure+1)) - (1 << (stationnum - arrival));
+		}*/
+		int partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		int partmask2 = stationmask & (~partmask1);
 
 		Vector<Integer>thisroute = data.get(route - 1);
@@ -168,6 +164,5 @@ public class TicketingDS implements TicketingSystem {
 
 
 		
-	//ToDo
 
 }
