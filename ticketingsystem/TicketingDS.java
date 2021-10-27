@@ -12,11 +12,10 @@ public class TicketingDS implements TicketingSystem {
 	int stationnum = 10;
 	int threadnum = 16;
 
-    int maxnum;
 	long stationmask;
     
 	public static AtomicLong count = new AtomicLong(0);
-	ArrayList<CopyOnWriteArrayList<AtomicLong>> data;
+	ArrayList<CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>>> data;
     
 	ReentrantLock rtLock = new ReentrantLock();
 	
@@ -34,24 +33,25 @@ public class TicketingDS implements TicketingSystem {
 	}
     
 	void init(){
-		maxnum = coachnum * seatnum;
-
 		stationmask = (1 << (stationnum-1)) - 1;
 		
 		data = new ArrayList<>();
 		for(int i = 0; i < routenum; i++) {
-			CopyOnWriteArrayList<AtomicLong>temp = new CopyOnWriteArrayList<>();
-			for(int j = 0; j < maxnum; j++) {
-				temp.add(new AtomicLong(stationmask));
+			CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> coach = new CopyOnWriteArrayList<>();
+			for(int j = 0; j < coachnum; j++) {
+				CopyOnWriteArrayList<AtomicLong> seat = new CopyOnWriteArrayList<>();
+				for(int k = 0; k < seatnum; k++){
+					seat.add(new AtomicLong(stationmask));
+				}
+				coach.add(seat);
 			}
-			data.add(temp);
+			data.add(coach);
 		}
 	}
 
 
 	@Override
 	public Ticket buyTicket(String passenger, int route, int departure, int arrival) {
-
 		long partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		long partmask2 = stationmask & (~partmask1);
 
@@ -62,18 +62,20 @@ public class TicketingDS implements TicketingSystem {
 		ticket.departure = departure;
 		ticket.arrival = arrival;
 
-		CopyOnWriteArrayList<AtomicLong>thisroute = data.get(route - 1);
+		CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> thisroute = data.get(route - 1);
 
 		//rtLock.lock();
-		for(int i = 0; i < maxnum; i++){
-			long temp = thisroute.get(i).get();
-			while((temp & partmask1) == partmask1){
-				if(thisroute.get(i).compareAndSet(temp, temp & partmask2)){
-					ticket.coach = i / seatnum + 1;
-					ticket.seat = i % seatnum + 1;
-					return ticket;
+		for(int i = 0; i < coachnum; i++){
+			for(int j = 0; j < seatnum; j++){
+				long temp = thisroute.get(i).get(j).get();
+				while((temp & partmask1) == partmask1){
+					if(thisroute.get(i).get(j).compareAndSet(temp, temp & partmask2)){
+						ticket.coach = i + 1;
+						ticket.seat = j + 1;
+						return ticket;
+					}
+					temp = thisroute.get(i).get(j).get();
 				}
-				temp = thisroute.get(i).get();
 			}
 		}
 		//rtLock.unlock();		
@@ -87,13 +89,15 @@ public class TicketingDS implements TicketingSystem {
 
 		long partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 
-		CopyOnWriteArrayList<AtomicLong>thisroute = data.get(route - 1);
+		CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> thisroute = data.get(route - 1);
 
 		//rtLock.readLock().lock();
-		for(int i = 0; i < maxnum; i++){
-			long temp = thisroute.get(i).get();
-			if((temp & partmask) == partmask){
-				ans++;
+		for(int i = 0; i < coachnum; i++){
+			for(int j = 0; j < seatnum; j++){
+				long temp = thisroute.get(i).get(j).get();
+				if((temp & partmask) == partmask){
+					ans++;
+				}
 			}
 		}
 		//rtLock.readLock().unlock();
@@ -109,21 +113,19 @@ public class TicketingDS implements TicketingSystem {
 		int coach = ticket.coach;
 		int seat = ticket.seat;
 
-		int loc = (coach - 1) * seatnum + (seat - 1);
-
 		long partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		long partmask2 = stationmask & (~partmask1);
 
-		CopyOnWriteArrayList<AtomicLong>thisroute = data.get(route - 1);
+		CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> thisroute = data.get(route - 1);
 
 		//rtLock.lock();
 		
-		long temp = thisroute.get(loc).get();
+		long temp = thisroute.get(coach-1).get(seat-1).get();
 		while((temp | partmask2) == partmask2){
-			if(thisroute.get(loc).compareAndSet(temp, temp | partmask1)){
+			if(thisroute.get(coach-1).get(seat-1).compareAndSet(temp, temp | partmask1)){
 				return true;
 			}
-			temp = thisroute.get(loc).get();
+			temp = thisroute.get(coach-1).get(seat-1).get();
 		}
 		//rtLock.unlock();
 
