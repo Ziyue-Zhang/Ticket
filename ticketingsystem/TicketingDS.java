@@ -12,11 +12,11 @@ public class TicketingDS implements TicketingSystem {
 	int stationnum = 10;
 	int threadnum = 16;
 
-    int maxnum;
+	int maxnum;
 	long stationmask;
     
 	public static AtomicLong count = new AtomicLong(0);
-	ArrayList<CopyOnWriteArrayList<AtomicLong>> data;
+	CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> data;
     
 	ReentrantLock rtLock = new ReentrantLock();
 	
@@ -38,7 +38,7 @@ public class TicketingDS implements TicketingSystem {
 
 		stationmask = (1 << (stationnum-1)) - 1;
 		
-		data = new ArrayList<>();
+		data = new CopyOnWriteArrayList<>();
 		for(int i = 0; i < routenum; i++) {
 			CopyOnWriteArrayList<AtomicLong>temp = new CopyOnWriteArrayList<>();
 			for(int j = 0; j < maxnum; j++) {
