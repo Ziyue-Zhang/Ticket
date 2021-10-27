@@ -35,10 +35,7 @@ public class TicketingDS implements TicketingSystem {
     
 	void init(){
 		maxnum = coachnum * seatnum;
-        /*stationmask = 0;
-		for(int i = 0; i < stationnum; i++){
-			stationmask = (stationmask << 1) + 1;
-		}*/
+
 		stationmask = (1 << (stationnum-1)) - 1;
 		
 		data = new ArrayList<>();
@@ -54,24 +51,12 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public Ticket buyTicket(String passenger, int route, int departure, int arrival) {
-		
-		long tid = count.incrementAndGet();
 
-		/*int partmask1 = 0;
-		int partmask2 = 0;
-		for(int i = 0; i < stationnum; i++){
-			partmask1 = partmask1 << 1;
-			partmask2 = partmask2 << 1;
-			if(departure - 1 <= i && i <= arrival - 1)
-				partmask1 += 1;
-			else
-				partmask2 += 1;
-		} */
 		long partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		long partmask2 = stationmask & (~partmask1);
 
 		Ticket ticket = new Ticket();
-		ticket.tid = tid;
+		ticket.tid = count.incrementAndGet();
 		ticket.passenger = passenger;
 		ticket.route = route;
 		ticket.departure = departure;
@@ -100,12 +85,6 @@ public class TicketingDS implements TicketingSystem {
 	public int inquiry(int route, int departure, int arrival) {
 		int ans= 0;
 
-		/*int partmask = 0;
-		for(int i = 0; i < stationnum; i++){
-			partmask = partmask << 1;
-			if(departure - 1 <= i && i <= arrival - 1)
-				partmask += 1;
-		}*/
 		long partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 
 		CopyOnWriteArrayList<AtomicLong>thisroute = data.get(route - 1);
@@ -132,16 +111,6 @@ public class TicketingDS implements TicketingSystem {
 
 		int loc = (coach - 1) * seatnum + (seat - 1);
 
-		/*int partmask1 = 0;
-		int partmask2 = 0;
-		for(int i = 0; i < stationnum; i++){
-			partmask1 = partmask1 << 1;
-			partmask2 = partmask2 << 1;
-			if(departure - 1 <= i && i <arrival - 1)
-				partmask1 += 1;
-			else
-				partmask2 += 1;
-		}*/
 		long partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		long partmask2 = stationmask & (~partmask1);
 
@@ -160,8 +129,5 @@ public class TicketingDS implements TicketingSystem {
 
 		return false;
 	}
-
-
-		
 
 }
