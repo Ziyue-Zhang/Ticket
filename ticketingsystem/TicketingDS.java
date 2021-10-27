@@ -3,7 +3,7 @@ package ticketingsystem;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 
 public class TicketingDS implements TicketingSystem {
 	int routenum = 5;
@@ -18,7 +18,7 @@ public class TicketingDS implements TicketingSystem {
 	public static AtomicLong count = new AtomicLong(0);
 	CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> data;
     
-	ReentrantLock rtLock = new ReentrantLock();
+	//ReentrantLock rtLock = new ReentrantLock();
 	
     TicketingDS(){
 		init();
