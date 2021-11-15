@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Test {
-	final static int threadnum = 2;
+	final static int threadnum = 4;
 	final static int routenum = 3; // route is designed from 1 to 3
 	final static int coachnum = 5; // coach is arranged from 1 to 5
 	final static int seatnum = 10; // seat is allocated from 1 to 20
@@ -24,20 +24,6 @@ public class Test {
 	private final static long[] buytime = new long[threadnum];
 	private final static long[] inqtime = new long[threadnum];
 
-	private static final AtomicInteger nextId = new AtomicInteger(0);
-
-    // Thread local variable containing each thread's ID
-    private static final ThreadLocal<Integer> threadId =
-        new ThreadLocal<Integer>() {
-            @Override protected Integer initialValue() {
-                return nextId.getAndIncrement();
-        }
-    };
-
-    // Returns the current thread's unique ID, assigning it if necessary
-    public static int get() {
-        return threadId.get();
-    }
 
 	static String passengerName() {
 		Random rand = new Random();
@@ -125,7 +111,7 @@ public class Test {
 			}
 		}
 		double finishTime = tottime / 1000000;
-		double res = testnum / finishTime;
+		double res = testnum * threadnum / finishTime;
 		System.out.println(res);	
 	}
 }
