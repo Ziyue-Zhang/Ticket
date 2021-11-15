@@ -116,9 +116,13 @@ public class Test {
 	    }	
 		long tottime = 0;
 		for(int i = 0; i < threadnum; i++){
-			tottime += rettime[i];
-			tottime += buytime[i];
-			tottime += inqtime[i];
+			long tmptime = 0;
+			tmptime += rettime[i];
+			tmptime += buytime[i];
+			tmptime += inqtime[i];
+			if(tottime < tmptime){
+				tottime = tmptime;
+			}
 		}
 		double finishTime = tottime / 1000000;
 		double res = testnum / finishTime;
