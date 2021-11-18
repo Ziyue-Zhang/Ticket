@@ -1,6 +1,7 @@
 package ticketingsystem;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 //import java.util.concurrent.locks.ReentrantLock;
 //import java.util.ArrayList;
@@ -17,7 +18,11 @@ public class TicketingDS implements TicketingSystem {
     
 	public static AtomicLong count = new AtomicLong(0);
 	CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> routes;
-    
+
+	// cache for inquiry
+	ConcurrentHashMap<Integer, ConcurrentHashMap<Long,Integer>> cache;
+    // CopyOnWriteArrayList<AtomicLong> dirty;
+
 	//ReentrantLock rtLock = new ReentrantLock();
 	
     TicketingDS(){
@@ -39,12 +44,20 @@ public class TicketingDS implements TicketingSystem {
 		stationmask = (1 << (stationnum-1)) - 1;
 		
 		routes = new CopyOnWriteArrayList<>();
+		cache = new ConcurrentHashMap<Integer, ConcurrentHashMap<Long,Integer>>();
 		for(int i = 0; i < routenum; i++) {
 			CopyOnWriteArrayList<AtomicLong>seats = new CopyOnWriteArrayList<>();
 			for(int j = 0; j < maxnum; j++) {
 				seats.add(new AtomicLong(stationmask));
 			}
 			routes.add(seats);
+
+			for(int j = 0; j < coachnum; j++) {
+				ConcurrentHashMap<Long, Integer> tmp = new ConcurrentHashMap<Long,Integer>(seatnum*3);
+				tmp.put(stationmask, seatnum);
+				cache.put(i*coachnum+j,tmp);
+			}
+			// dirty.add(new AtomicLong(1));
 		}
 	}
 
@@ -63,6 +76,7 @@ public class TicketingDS implements TicketingSystem {
 		ticket.arrival = arrival;
 
 		CopyOnWriteArrayList<AtomicLong>thisroute = routes.get(route - 1);
+		//ConcurrentHashMap<Long,Integer>thiscache = cache.get(route - 1);
 		
 		//rtLock.lock();
 		for(int i = 0; i < maxnum; i++){
@@ -71,6 +85,7 @@ public class TicketingDS implements TicketingSystem {
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
+					cache.get((route - 1) * coachnum + ticket.coach - 1).clear();
 					return ticket;
 				}
 				seatmask = thisroute.get(i).get();
@@ -83,19 +98,40 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public int inquiry(int route, int departure, int arrival) {
-		int ans= 0;
+		int ans = 0;
+		int tmp = 0;
 
-		long partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
+		final long partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 
 		CopyOnWriteArrayList<AtomicLong>thisroute = routes.get(route - 1);
+		//ConcurrentHashMap<Long,Integer>thiscache = cache.get(route - 1);
 
+		int loc = (route-1)*coachnum;
+		int value = 0;
+		for(int j = 0; j< coachnum; j++){
+			try{
+				value = cache.get(loc+j).get(partmask);
+				tmp = value;
+			}catch(NullPointerException e){
+				for(int i = 0; i < maxnum; i++){
+					long seatmask = thisroute.get(i).get();
+					if((seatmask & partmask) == partmask){
+						tmp++;
+					}
+				}
+			   }finally{
+				cache.get(loc+j).put(partmask, tmp);
+				ans+=tmp;
+			   }
+		}
+		
 		//rtLock.readLock().lock();
-		for(int i = 0; i < maxnum; i++){
+		/*for(int i = 0; i < maxnum; i++){
 			long seatmask = thisroute.get(i).get();
 			if((seatmask & partmask) == partmask){
 				ans++;
 			}
-		}
+		}*/
 		//rtLock.readLock().unlock();
 
 		return ans;
@@ -115,11 +151,13 @@ public class TicketingDS implements TicketingSystem {
 		long partmask2 = stationmask & (~partmask1);
 
 		CopyOnWriteArrayList<AtomicLong>thisroute = routes.get(route - 1);
+		//ConcurrentHashMap<Long,Integer>thiscache = cache.get(route - 1);
 
 		//rtLock.lock();
 		long seatmask = thisroute.get(loc).get();
 		while((seatmask | partmask2) == partmask2){
 			if(thisroute.get(loc).compareAndSet(seatmask, seatmask | partmask1)){
+				cache.get((route - 1) * coachnum + coach - 1).clear();
 				return true;
 			}
 			seatmask = thisroute.get(loc).get();
