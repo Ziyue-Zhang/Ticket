@@ -51,6 +51,8 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public Ticket buyTicket(String passenger, int route, int departure, int arrival) {
+		if(!legal(route, departure, arrival))
+			return null;
 
 		int partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		int partmask2 = stationmask & (~partmask1);
@@ -83,6 +85,9 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public int inquiry(int route, int departure, int arrival) {
+		if(!legal(route, departure, arrival))
+			return 0;
+			
 		int ans= 0;
 
 		int partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
@@ -106,8 +111,13 @@ public class TicketingDS implements TicketingSystem {
 		int route = ticket.route;
 		int departure = ticket.departure;
 		int arrival = ticket.arrival;
+
+		if(!legal(route, departure, arrival))
+			return false;
+
 		int coach = ticket.coach;
 		int seat = ticket.seat;
+
 
 		int loc = (coach - 1) * seatnum + (seat - 1);
 
@@ -127,6 +137,14 @@ public class TicketingDS implements TicketingSystem {
 		//rtLock.unlock();
 
 		return false;
+	}
+
+	boolean legal(int route, int departure, int arrival){
+		if(route <= 0 || route > routenum || departure >= arrival
+			|| departure <= 0 || departure > stationnum 
+			|| arrival <= 0 || arrival > stationnum)
+			return false;
+		return true;
 	}
 
 }
