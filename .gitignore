@@ -1,4 +1,6 @@
 # Compiled class file
+trace
+
 *.class
 
 # Log file

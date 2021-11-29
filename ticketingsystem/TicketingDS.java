@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
 //import java.util.concurrent.locks.ReentrantLock;
 //import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class TicketingDS implements TicketingSystem {
 	int routenum = 5;
@@ -17,6 +18,7 @@ public class TicketingDS implements TicketingSystem {
     
 	public static AtomicInteger count = new AtomicInteger(0);
 	CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicInteger>> routes;
+	TicketingCounter tc;
     
 	//ReentrantLock rtLock = new ReentrantLock();
 	
@@ -46,6 +48,8 @@ public class TicketingDS implements TicketingSystem {
 			}
 			routes.add(seats);
 		}
+
+		tc = new TicketingCounter(routenum, maxnum, stationnum);
 	}
 
 
@@ -64,15 +68,31 @@ public class TicketingDS implements TicketingSystem {
 		ticket.departure = departure;
 		ticket.arrival = arrival;
 
+		int rand_i = ThreadLocalRandom.current().nextInt(maxnum);
+
 		CopyOnWriteArrayList<AtomicInteger>thisroute = routes.get(route - 1);
 		
 		//rtLock.lock();
-		for(int i = 0; i < maxnum; i++){
+		for(int i = rand_i; i < maxnum; i++){
 			int seatmask = thisroute.get(i).get();
 			while((seatmask & partmask1) == partmask1){
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
+					tc.buyticket(route, departure, arrival, seatmask);
+					return ticket;
+				}
+				seatmask = thisroute.get(i).get();
+			}
+		}
+		
+		for(int i = 0; i < rand_i; i++){
+			int seatmask = thisroute.get(i).get();
+			while((seatmask & partmask1) == partmask1){
+				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
+					ticket.coach = i / seatnum + 1;
+					ticket.seat = i % seatnum + 1;
+					tc.buyticket(route, departure, arrival, seatmask);
 					return ticket;
 				}
 				seatmask = thisroute.get(i).get();
@@ -88,7 +108,8 @@ public class TicketingDS implements TicketingSystem {
 		if(!legal(route, departure, arrival))
 			return 0;
 			
-		int ans= 0;
+		return tc.inqticket(route, departure, arrival);
+		/*int ans= 0;
 
 		int partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 
@@ -103,7 +124,7 @@ public class TicketingDS implements TicketingSystem {
 		}
 		//rtLock.readLock().unlock();
 
-		return ans;
+		return ans;*/
 	}
 
 	@Override
@@ -130,6 +151,7 @@ public class TicketingDS implements TicketingSystem {
 		int seatmask = thisroute.get(loc).get();
 		while((seatmask | partmask2) == partmask2){
 			if(thisroute.get(loc).compareAndSet(seatmask, seatmask | partmask1)){
+				tc.retticket(route, departure, arrival, seatmask);
 				return true;
 			}
 			seatmask = thisroute.get(loc).get();
