@@ -1,6 +1,7 @@
 package ticketingsystem;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.CopyOnWriteArrayList;
 //import java.util.concurrent.locks.ReentrantLock;
 //import java.util.ArrayList;
@@ -18,6 +19,7 @@ public class TicketingDS implements TicketingSystem {
     
 	public static AtomicInteger count = new AtomicInteger(0);
 	CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicInteger>> routes;
+	CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicLong>> solds;
 	TicketingCounter tc;
     
 	//ReentrantLock rtLock = new ReentrantLock();
@@ -49,6 +51,15 @@ public class TicketingDS implements TicketingSystem {
 			routes.add(seats);
 		}
 
+		solds = new CopyOnWriteArrayList<>();
+		for(int i = 0; i < routenum; i++) {
+			CopyOnWriteArrayList<AtomicLong>sold = new CopyOnWriteArrayList<>();
+			for(int j = 0; j < maxnum; j++) {
+				sold.add(new AtomicLong(0));
+			}
+			solds.add(sold);
+		}
+
 		tc = new TicketingCounter(routenum, maxnum, stationnum);
 	}
 
@@ -71,6 +82,7 @@ public class TicketingDS implements TicketingSystem {
 		int rand_i = ThreadLocalRandom.current().nextInt(maxnum);
 
 		CopyOnWriteArrayList<AtomicInteger>thisroute = routes.get(route - 1);
+		CopyOnWriteArrayList<AtomicLong>sold = solds.get(route - 1);
 		
 		//rtLock.lock();
 		for(int i = rand_i; i < maxnum; i++){
@@ -79,6 +91,7 @@ public class TicketingDS implements TicketingSystem {
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
+					sold.get(i).set(ticket.tid);
 					tc.buyticket(route, departure, arrival, seatmask);
 					return ticket;
 				}
@@ -131,6 +144,7 @@ public class TicketingDS implements TicketingSystem {
 
 	@Override
 	public boolean refundTicket(Ticket ticket) {
+
 		int route = ticket.route;
 		int departure = ticket.departure;
 		int arrival = ticket.arrival;
@@ -141,8 +155,12 @@ public class TicketingDS implements TicketingSystem {
 		int coach = ticket.coach;
 		int seat = ticket.seat;
 
-
 		int loc = (coach - 1) * seatnum + (seat - 1);
+
+		CopyOnWriteArrayList<AtomicLong>sold = solds.get(route - 1);
+		if(sold.get(loc).get() != ticket.tid){
+			return false;
+		}
 
 		int partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		int partmask2 = stationmask & (~partmask1);
@@ -154,6 +172,7 @@ public class TicketingDS implements TicketingSystem {
 		while((seatmask | partmask2) == partmask2){
 			if(thisroute.get(loc).compareAndSet(seatmask, seatmask | partmask1)){
 				tc.retticket(route, departure, arrival, seatmask);
+				sold.get(loc).set(0);
 				return true;
 			}
 			seatmask = thisroute.get(loc).get();
