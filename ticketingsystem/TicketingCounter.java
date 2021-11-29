@@ -19,16 +19,11 @@ public class TicketingCounter {
 		for(int i = 0; i < routenum; i++) {
 			CopyOnWriteArrayList<AtomicInteger>tickets = new CopyOnWriteArrayList<>();
 
-            tickets.add(new AtomicInteger(0));
+            tickets.add(new AtomicInteger(maxnum));
 
-			for(int j = 0; j < stationnum; j++){
+			for(int j = 0; j <= stationnum; j++){
                 for (int k = 0; k < stationnum; k++){
-                    if(j>0 && k>0 && j<k){
-                        tickets.add(new AtomicInteger(maxnum));
-                    }
-                    else{
-                        tickets.add(new AtomicInteger(0));
-                    }
+                    tickets.add(new AtomicInteger(maxnum));
                 }
             }
 			routes.add(tickets);

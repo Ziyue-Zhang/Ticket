@@ -107,8 +107,10 @@ public class TicketingDS implements TicketingSystem {
 	public int inquiry(int route, int departure, int arrival) {
 		if(!legal(route, departure, arrival))
 			return 0;
-			
-		return tc.inqticket(route, departure, arrival);
+
+		int res = tc.inqticket(route, departure, arrival);
+		//System.out.println(res);
+		return res;
 		/*int ans= 0;
 
 		int partmask = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
