@@ -105,6 +105,7 @@ public class TicketingDS implements TicketingSystem {
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
+					sold.get(i).set(ticket.tid);
 					tc.buyticket(route, departure, arrival, seatmask);
 					return ticket;
 				}
