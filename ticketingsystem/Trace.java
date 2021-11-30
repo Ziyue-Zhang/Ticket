@@ -21,14 +21,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 //         return threadId.get();
 //     }
 // }
-
+//java -jar checker.jar --coach 10 --seat 100 --station 10 < trace
 public class Trace {
-	final static int threadnum = 5;
+	final static int threadnum = 1;
 	final static int routenum = 1; // route is designed from 1 to 3
 	final static int coachnum = 10; // coach is arranged from 1 to 5
 	final static int seatnum = 100; // seat is allocated from 1 to 20
 	final static int stationnum = 10; // station is designed from 1 to 5
-	final static int testnum = 100;
+	final static int testnum = 1000;
 
 	//final static int testnum = 10000000;
 	final static int retpc = 10; // return ticket operation is 10% percent
