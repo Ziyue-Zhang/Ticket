@@ -56,7 +56,7 @@ public class TicketingDS implements TicketingSystem {
 			CopyOnWriteArrayList<CopyOnWriteArrayList<Long>>sold_seats = new CopyOnWriteArrayList<>();
 			for(int j = 0; j < maxnum; j++) {
 				CopyOnWriteArrayList<Long>sold_station = new CopyOnWriteArrayList<>();
-				for(int k = 0; k < stationmask; k++){
+				for(int k = 0; k < stationnum; k++){
 					sold_station.add((long)0);
 				}
 				sold_seats.add(sold_station);
