@@ -11,13 +11,16 @@ import java.util.concurrent.ThreadLocalRandom;
 
 class MyTicket{
 	long tid;
+	int arrival;
 	String passenger;
-	MyTicket(long tid, String passenger){
+	MyTicket(long tid, String passenger, int arrival){
 		this.tid = tid;
+		this.arrival = arrival;
 		this.passenger = passenger;
 	}
 	MyTicket(){
 		this.tid = (long) 0;
+		this.arrival = 0;
 		this.passenger = "";
 	}
 }
@@ -111,7 +114,7 @@ public class TicketingDS implements TicketingSystem {
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
-					sold.get(i).set(departure, new MyTicket(ticket.tid, passenger));
+					sold.get(i).set(departure, new MyTicket(ticket.tid, passenger, arrival));
 					tc.buyticket(route, departure, arrival, seatmask);
 					return ticket;
 				}
@@ -125,7 +128,7 @@ public class TicketingDS implements TicketingSystem {
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
-					sold.get(i).set(departure, new MyTicket(ticket.tid, passenger));
+					sold.get(i).set(departure, new MyTicket(ticket.tid, passenger, arrival));
 					tc.buyticket(route, departure, arrival, seatmask);
 					return ticket;
 				}
@@ -180,6 +183,7 @@ public class TicketingDS implements TicketingSystem {
 
 		ArrayList<ArrayList<MyTicket>>sold = tid_routes.get(route - 1);
 		if(sold.get(loc).get(departure).tid != ticket.tid 
+		|| sold.get(loc).get(departure).arrival != arrival
 		|| sold.get(loc).get(departure).passenger != ticket.passenger){
 			return false;
 		}
