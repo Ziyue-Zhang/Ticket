@@ -26,7 +26,7 @@ public class Trace {
 	final static int threadnum = 1;
 	final static int routenum = 1; // route is designed from 1 to 3
 	final static int coachnum = 10; // coach is arranged from 1 to 5
-	final static int seatnum = 100; // seat is allocated from 1 to 20
+	final static int seatnum = 10; // seat is allocated from 1 to 20
 	final static int stationnum = 10; // station is designed from 1 to 5
 	final static int testnum = 1000;
 
