@@ -93,14 +93,14 @@ public class TicketingCounter {
 
         CopyOnWriteArrayList<AtomicInteger>thisroute = routes.get(route - 1);
 
-        for(int i = low; i <= departure; i++){
-            for (int j = departure+1; j < high; j++){
+        for(int i = departure+1; i < arrival; i++){
+            for (int j = i+1; j < high; j++){
                 thisroute.get(i*stationnum + j).incrementAndGet();
             }
         }
 
-        for(int i = departure+1; i < arrival; i++){
-            for (int j = i+1; j < high; j++){
+        for(int i = low; i <= departure; i++){
+            for (int j = departure+1; j < high; j++){
                 thisroute.get(i*stationnum + j).incrementAndGet();
             }
         }
