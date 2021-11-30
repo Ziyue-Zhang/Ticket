@@ -1,10 +1,12 @@
 package ticketingsystem;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.lang.reflect.Array;
+import java.util.List;
 //import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.CopyOnWriteArrayList;
 //import java.util.concurrent.locks.ReentrantLock;
-//import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TicketingDS implements TicketingSystem {
@@ -19,7 +21,7 @@ public class TicketingDS implements TicketingSystem {
     
 	public static AtomicInteger count = new AtomicInteger(0);
 	CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicInteger>> routes;
-	CopyOnWriteArrayList<CopyOnWriteArrayList<CopyOnWriteArrayList<Long>>> sold_routes;
+	CopyOnWriteArrayList<ArrayList<ArrayList<Long>>> sold_routes;
 	TicketingCounter tc;
     
 	//ReentrantLock rtLock = new ReentrantLock();
@@ -53,9 +55,9 @@ public class TicketingDS implements TicketingSystem {
 
 		sold_routes = new CopyOnWriteArrayList<>();
 		for(int i = 0; i < routenum; i++) {
-			CopyOnWriteArrayList<CopyOnWriteArrayList<Long>>sold_seats = new CopyOnWriteArrayList<>();
+			ArrayList<ArrayList<Long>>sold_seats = new ArrayList<>();
 			for(int j = 0; j < maxnum; j++) {
-				CopyOnWriteArrayList<Long>sold_station = new CopyOnWriteArrayList<>();
+				ArrayList<Long>sold_station = new ArrayList<>();
 				for(int k = 0; k < stationnum; k++){
 					sold_station.add((long)0);
 				}
@@ -86,7 +88,7 @@ public class TicketingDS implements TicketingSystem {
 		int rand_i = ThreadLocalRandom.current().nextInt(maxnum);
 
 		CopyOnWriteArrayList<AtomicInteger>thisroute = routes.get(route - 1);
-		CopyOnWriteArrayList<CopyOnWriteArrayList<Long>>sold = sold_routes.get(route - 1);
+		ArrayList<ArrayList<Long>>sold = sold_routes.get(route - 1);
 		
 		//rtLock.lock();
 		for(int i = rand_i; i < maxnum; i++){
@@ -95,7 +97,7 @@ public class TicketingDS implements TicketingSystem {
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
-					//sold.get(i).set(departure, ticket.tid);
+					sold.get(i).set(departure, ticket.tid);
 					tc.buyticket(route, departure, arrival, seatmask);
 					return ticket;
 				}
@@ -109,7 +111,7 @@ public class TicketingDS implements TicketingSystem {
 				if(thisroute.get(i).compareAndSet(seatmask, seatmask & partmask2)){
 					ticket.coach = i / seatnum + 1;
 					ticket.seat = i % seatnum + 1;
-					//sold.get(i).set(departure, ticket.tid);
+					sold.get(i).set(departure, ticket.tid);
 					tc.buyticket(route, departure, arrival, seatmask);
 					return ticket;
 				}
@@ -162,10 +164,10 @@ public class TicketingDS implements TicketingSystem {
 
 		int loc = (coach - 1) * seatnum + (seat - 1);
 
-		CopyOnWriteArrayList<CopyOnWriteArrayList<Long>>sold = sold_routes.get(route - 1);
-		/*if(sold.get(loc).get(departure) != ticket.tid){
+		ArrayList<ArrayList<Long>>sold = sold_routes.get(route - 1);
+		if(sold.get(loc).get(departure) != ticket.tid){
 			return false;
-		}*/
+		}
 
 		int partmask1 = (1 << (stationnum-departure)) - (1 << (stationnum-arrival));
 		int partmask2 = stationmask & (~partmask1);
