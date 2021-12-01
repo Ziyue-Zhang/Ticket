@@ -34,6 +34,10 @@ public class Test {
 	final static int buypc = 40; // buy ticket operation is 30% percent
 	final static int inqpc = 100; //inquiry ticket operation is 60% percent
 
+	static AtomicInteger ret_count = new AtomicInteger(0);
+	static AtomicInteger buy_count = new AtomicInteger(0);
+	static AtomicInteger inq_count = new AtomicInteger(0);
+
 	private final static long[] retstart = new long[threadnum];
 	private final static long[] buystart = new long[threadnum];
 	private final static long[] inqstart = new long[threadnum];
@@ -70,7 +74,8 @@ public class Test {
 								retstart[ThreadId.get()] = System.nanoTime();
             					if (tds.refundTicket(ticket)) {
 									rettime[ThreadId.get()] += System.nanoTime() - retstart[ThreadId.get()];
-            						//System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketRefund" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach  + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
+            						ret_count.incrementAndGet();
+									//System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketRefund" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach  + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
             						//System.out.flush();
             					} else {
             						//System.out.println(preTime + " " + String.valueOf(System.nanoTime()-startTime) + " " + ThreadId.get() + " " + "ErrOfRefund");
@@ -89,7 +94,8 @@ public class Test {
 							buystart[ThreadId.get()] = System.nanoTime();
             				if ((ticket = tds.buyTicket(passenger, route, departure, arrival)) != null) {
 								buytime[ThreadId.get()] += System.nanoTime() - buystart[ThreadId.get()];
-            					//System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketBought" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
+            					buy_count.incrementAndGet();
+								//System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "TicketBought" + " " + ticket.tid + " " + ticket.passenger + " " + ticket.route + " " + ticket.coach + " " + ticket.departure + " " + ticket.arrival + " " + ticket.seat);
             					soldTicket.add(ticket);
         						//System.out.flush();
             				} else {
@@ -104,7 +110,8 @@ public class Test {
 							inqstart[ThreadId.get()] = System.nanoTime();
             				int leftTicket = tds.inquiry(route, departure, arrival);
 							inqtime[ThreadId.get()] += System.nanoTime() - inqstart[ThreadId.get()];
-            				//System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "RemainTicket" + " " + leftTicket + " " + route+ " " + departure+ " " + arrival);
+            				inq_count.incrementAndGet();
+							//System.out.println(preTime + " " + postTime + " " + ThreadId.get() + " " + "RemainTicket" + " " + leftTicket + " " + route+ " " + departure+ " " + arrival);
     						//System.out.flush();  
     						         			
             			}
@@ -119,17 +126,27 @@ public class Test {
 	    	threads[i].join();
 	    }	
 		long tottime = 0;
+		long ret_time = 0;
+		long buy_time = 0;
+		long inq_time = 0;
 		for(int i = 0; i < threadnum; i++){
 			long tmptime = 0;
 			tmptime += rettime[i];
 			tmptime += buytime[i];
 			tmptime += inqtime[i];
-			if(tottime < tmptime){
+			ret_time += rettime[i];
+			buy_time += buytime[i]; 
+			inq_time += inqtime[i];  
+			/*if(tottime < tmptime){
 				tottime = tmptime;
-			}
+			}*/
+			tottime += tmptime/threadnum;
 		}
 		double finishTime = tottime / 1000000;
 		double res = testnum * threadnum / finishTime;
-		System.out.println(res);	
+		System.out.println("Throughput:"+res);
+		System.out.println("ret count:"+ret_count.get()+" delay:"+ret_time/ret_count.get());
+		System.out.println("buy count:"+buy_count.get()+" delay:"+buy_time/buy_count.get());
+		System.out.println("inq count:"+inq_count.get()+" delay:"+inq_time/inq_count.get());
 	}
 }
