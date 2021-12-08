@@ -184,7 +184,7 @@ public class TicketingDS implements TicketingSystem {
 		ArrayList<ArrayList<MyTicket>>sold = tid_routes.get(route - 1);
 		if(sold.get(loc).get(departure).tid != ticket.tid 
 		|| sold.get(loc).get(departure).arrival != arrival
-		|| sold.get(loc).get(departure).passenger != ticket.passenger){
+		|| sold.get(loc).get(departure).passenger.equals(ticket.passenger) == false){
 			return false;
 		}
 
