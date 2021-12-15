@@ -23,7 +23,7 @@ CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicInteger>> left_routes;
 先获得需要修改的区间范围
 
 ```java
-				int low = departure;
+	int low = departure;
         int high = arrival+1;
         int mask = 0;
         while(low >= 1){
@@ -49,7 +49,7 @@ CopyOnWriteArrayList<CopyOnWriteArrayList<AtomicInteger>> left_routes;
 再对需要修改的区间进行修改
 
 ```java
-			  CopyOnWriteArrayList<AtomicInteger>thisroute = routes.get(route - 1);
+	CopyOnWriteArrayList<AtomicInteger>thisroute = routes.get(route - 1);
 
         for(int i = departure+1; i < arrival; i++){
             for (int j = i+1; j < high; j++){
@@ -137,7 +137,7 @@ class MyTicket{
 性能测试时的参数配置如下：
 
 ```java
-				final static int threadnum = 64;
+	final static int threadnum = 64;
         final static int routenum = 10; // route is designed from 1 to 3
         final static int coachnum = 10; // coach is arranged from 1 to 5
         final static int seatnum = 100; // seat is allocated from 1 to 20
